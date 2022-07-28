@@ -5,6 +5,8 @@
 # Prerequisites
 *.d
 
+mine
+
 # Compiled Object files
 *.slo
 *.lo
