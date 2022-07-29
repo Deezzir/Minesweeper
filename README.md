@@ -1,4 +1,4 @@
-# Terminal Minesweeper
+# Terminal Minesweeper (Work in Progress)
 
 ![thumbnail](./thumbnail.png)
 
