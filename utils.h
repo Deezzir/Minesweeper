@@ -1,8 +1,6 @@
 #ifndef __UTILS_H
 #define __UTILS_H
 
-#include <stdio.h>
-
 static const char switch_char = '-';
 static const char unknown_char = '?';
 
@@ -34,6 +32,10 @@ int options(int argc, char *argv[], const char *legal);
 /* Prints program usage */
 void usage();
 
+/* Gets arguments from the terminal and sets global variables */
+void get_arguments(int argc, char** argv);
+
+/* Prints Error message and exits with EINVAL */
 void invalid_arg_exit();
 
 #endif  // __UTILS_H
