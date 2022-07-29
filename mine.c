@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <unistd.h>
+#include <signal.h>
 
 #include "mine.h"
 #include "utils.h"
@@ -16,6 +17,8 @@ size_t FIELD_MIN_LIMIT = 20;
 size_t FIELD_MAX_LIMIT = 128;
 size_t PERCENTAGE_MIN_LIMIT = 1;
 size_t PERCENTAGE_MAX_LIMIT = 60;
+
+bool is_running;
 
 void field_init(struct Field* field, size_t rows, size_t cols, size_t perc) {
     field->cols = cols;
@@ -40,16 +43,10 @@ void field_init(struct Field* field, size_t rows, size_t cols, size_t perc) {
 }
 
 void field_redisplay(struct Field* field) {
-    putchar(27);
-    putchar('[');
-    putchar(field->rows);
-    putchar('A');    
-    putchar(27);
-    putchar('[');
-    putchar(field->cols*3);
-    putchar('D');
-     
+    printf("\033[%dA", (int)field->rows);
+    printf("\033[%dD", (int)field->cols*3); 
     field_display(field);
+     
 }
 
 void field_display(struct Field* field) {
@@ -87,25 +84,38 @@ void field_free(struct Field* field) {
 
 int main(int argc, char** argv) {
     struct Field main;
-    bool exited = false;
+    is_running = true;
     char c;
 
     set_input_mode();
     get_arguments(argc, argv);
+
+    // Setup signal handler
+    struct sigaction action;
+    action.sa_handler = &signal_handler;
+    sigemptyset(&action.sa_mask);
+    action.sa_flags = 0;
+    if (sigaction(SIGINT, &action, NULL) < 0) {
+        printf("ERROR:  failed to set signal action");
+        exit(EXIT_FAILURE);
+    }
 
 #ifdef DEBUG
     printf("ROWS: %zu\n", ROWS);
     printf("COLS: %zu\n", COLS);
     printf("PERCENTAGE: %zu\n", PERCENTAGE);
 #endif
-
+  
     field_init(&main, ROWS, COLS, PERCENTAGE);
     field_display(&main);
 
-    while (!exited){
+    while (is_running){
         field_redisplay(&main);
+        getchar();
     }
-    
+
+    field_free(&main);
+    clearScreen();
 
     return EXIT_SUCCESS;
 }

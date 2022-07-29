@@ -43,10 +43,17 @@ void invalid_arg_exit();
 /* Function to check if provided target is in range between min and max */
 bool is_in_range(int target, int min, int max);
 
-/**/
+/* Function to reset terminal setting using TermIOS*/
 void reset_input_mode(void);
 
-/**/
+/* Function to set terminal setting using TermIOS*/
 void set_input_mode(void);
+
+/*Signal Handler is responsible for*/
+/*handling SIGINT signal */
+void signal_handler(int signal);
+
+/* Function to clear terminal */
+void clearScreen();
 
 #endif  // __UTILS_H

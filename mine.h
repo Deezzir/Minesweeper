@@ -13,6 +13,8 @@ extern size_t FIELD_MAX_LIMIT;       /* Max Number of rows and cols */
 extern size_t PERCENTAGE_MIN_LIMIT;  /* Min percentage of mines */
 extern size_t PERCENTAGE_MAX_LIMIT;  /* Max percentage of mines */
 
+extern bool is_running;              /* program status */
+
 /* Cell State enum */
 enum CellState {
     closed,

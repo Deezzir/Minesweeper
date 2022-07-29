@@ -12,6 +12,7 @@
 
 int opt_index = 1;
 char *opt_arg = NULL;
+bool is_running;
 
 /* Variable to store original terminal settings */
 struct termios saved_tattr;
@@ -157,4 +158,20 @@ void set_input_mode(void) {
     tattr.c_cc[VMIN] = 1;
     tattr.c_cc[VTIME] = 0;
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &tattr);
+}
+
+void signal_handler(int signal) {
+    switch (signal) {
+        case SIGINT:
+            is_running = false;
+            exit(EXIT_SUCCESS);
+            break;
+
+        default:
+            break;
+    }
+}
+
+void clearScreen() {
+    printf("\e[1;1H\e[2J");
 }
