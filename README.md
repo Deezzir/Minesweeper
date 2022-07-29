@@ -1,4 +1,4 @@
-# Terminal Minesweeper
+# Terminal Minesweeper (Work in Progress)
 
 ![thumbnail](./thumbnail.png)
 
@@ -13,7 +13,7 @@ $ ./mine
 ```
 usage: mine [-r num] [-c num] [-p num]
        Optionally specify field [-r] rows and [-c] cols (20-128)
-       Optionally specify [-p] percentage of mines (1-99) 
+       Optionally specify [-p] percentage of mines (1-60) 
 ```
 
 ## Controls
