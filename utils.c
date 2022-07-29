@@ -1,14 +1,20 @@
 #include <ctype.h>
 #include <errno.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <termios.h>
+#include <unistd.h>
 
 #include "utils.h"
 #include "mine.h"
 
 int opt_index = 1;
 char *opt_arg = NULL;
+
+/* Variable to store original terminal settings */
+struct termios saved_tattr;
 
 void usage() {
     printf("usage: mine [-r num] [-c num] [-p num]\n");
@@ -69,26 +75,42 @@ void get_arguments(int argc, char **argv) {
         letter = options(argc, argv, "r:c:p:");
         value = opt_arg != NULL ? strtoul(opt_arg, &tail, 10) : -1;
 
-        printf("%c, %d\n", letter, value);
-
         while (letter != -1) {
             if (letter == '?') {
                 printf("invalid option: %s\n", argv[opt_index - 1]);
                 invalid_arg_exit();
-            } else if (value == -1 || tail[0] != '\0') {
+            } else if (errno == ERANGE) {
+                printf("invalid option argument: [-%c num] - number to large\n", letter);
+                invalid_arg_exit();
+            } else if (value == -1 || tail[0] != '\0' || errno == EINVAL) {
                 printf("invalid option argument: [-%c num] - must be followed by number\n", letter);
                 invalid_arg_exit();
             }
 
             switch (letter) {
                 case 'r':
-                    if (value != 0) ROWS = value;
+                    if (is_in_range(value, FIELD_MIN_LIMIT, FIELD_MAX_LIMIT))
+                        ROWS = value;
+                    else {
+                        printf("for 'row' option [-%c]\n", letter);
+                        invalid_arg_exit();
+                    }
                     break;
                 case 'c':
-                    if (value != 0) COLS = value;
+                    if (is_in_range(value, FIELD_MIN_LIMIT, FIELD_MAX_LIMIT))
+                        COLS = value;
+                    else {
+                        printf("for 'col' option [-%c]\n", letter);
+                        invalid_arg_exit();
+                    }
                     break;
                 case 'p':
-                    if (value != 0) PERCENTAGE = value;
+                    if (is_in_range(value, PERCENTAGE_MIN_LIMIT, PERCENTAGE_MAX_LIMIT))
+                        PERCENTAGE = value;
+                    else {
+                        printf("for 'percentage' option [-%c]\n", letter);
+                        invalid_arg_exit();
+                    }
                     break;
                 default:
                     break;
@@ -101,7 +123,38 @@ void get_arguments(int argc, char **argv) {
     }
 }
 
+bool is_in_range(int target, int min, int max) {
+    if (target > max || target < min) {
+        printf("provided argument: %d is not in range (%d-%d) ", target, min, max);
+        return false;
+    }
+    return true;
+}
+
 void invalid_arg_exit() {
     usage();
     exit(EINVAL);
+}
+
+void reset_input_mode(void) {
+    tcsetattr(STDIN_FILENO, TCSANOW, &saved_tattr);
+}
+
+void set_input_mode(void) {
+    struct termios tattr;
+    char *name;
+
+    if (!isatty(STDIN_FILENO)) {
+        fprintf(stderr, "Not a terminal.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    tcgetattr(STDIN_FILENO, &saved_tattr);
+    atexit(reset_input_mode);
+
+    tcgetattr(STDIN_FILENO, &tattr);
+    tattr.c_lflag &= ~(ICANON | ECHO); /* Clear ICANON and ECHO.  */
+    tattr.c_cc[VMIN] = 1;
+    tattr.c_cc[VTIME] = 0;
+    tcsetattr(STDIN_FILENO, TCSAFLUSH, &tattr);
 }
