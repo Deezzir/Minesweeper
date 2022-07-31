@@ -62,4 +62,22 @@ void field_free(struct Field* field);
 /* Function returns true if specified row and col is the position of the game cursor, false otherwise  */
 bool field_at_cursor(struct Field* field, size_t row, size_t col);
 
+/* Function to move the cursor right */
+void field_cursor_move_right(struct Field* field);
+
+/* Function to move the cursor up */
+void field_cursor_move_up(struct Field* field);
+
+/* Function to move the cursor down */
+void field_cursor_move_down(struct Field* field);
+
+/* Function to move the cursor left */
+void field_cursor_move_left(struct Field* field);
+
+/* Function to flag the cell at the cursor */
+void field_flag_cell(struct Field* field);
+
+/* Function to get a reference of the cell at the provided row and col */
+struct Cell* field_get_cell(struct Field* field, size_t row, size_t col);
+
 #endif // __MINE_H
