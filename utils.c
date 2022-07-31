@@ -164,7 +164,6 @@ void signal_handler(int signal) {
     switch (signal) {
         case SIGINT:
             is_running = false;
-            exit(EXIT_SUCCESS);
             break;
 
         default:
@@ -172,6 +171,34 @@ void signal_handler(int signal) {
     }
 }
 
-void clearScreen() {
-    printf("\e[1;1H\e[2J");
+bool yes() {
+    char answer = '\0';
+
+    do {
+        scanf("%c", &answer);
+        switch (answer) {
+            case 'n':
+            case 'N':
+            case '\033':
+                printf("\r\033[2K");
+                return false;
+                break;
+
+            case 'y':
+            case 'Y':
+            case '\040':
+            case '\012':
+                printf("\r\033[2K");
+                return true;
+                break;
+
+            default:
+                break;
+        }
+
+    } while (1);
+}
+
+void clear_screen() {
+    system("clear");
 }

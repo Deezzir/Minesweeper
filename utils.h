@@ -54,6 +54,9 @@ void set_input_mode(void);
 void signal_handler(int signal);
 
 /* Function to clear terminal */
-void clearScreen();
+void clear_screen();
+
+/* Function to get Y/y or N/n from user input and convert it to bool */
+bool yes();
 
 #endif  // __UTILS_H

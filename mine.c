@@ -85,7 +85,7 @@ void field_free(struct Field* field) {
 int main(int argc, char** argv) {
     struct Field main;
     is_running = true;
-    char c;
+    int input;
 
     set_input_mode();
     get_arguments(argc, argv);
@@ -111,11 +111,22 @@ int main(int argc, char** argv) {
 
     while (is_running){
         field_redisplay(&main);
-        getchar();
+        input = getchar();
+
+        switch (input) {
+        case 'q':
+            printf("Exit the game? Y/y N/n: ");
+            is_running = !yes();
+            break;
+        
+        default:
+            break;
+        }
     }
 
     field_free(&main);
-    clearScreen();
+    clear_screen();
+    printf("Goodbye, stranger!\n");
 
     return EXIT_SUCCESS;
 }
