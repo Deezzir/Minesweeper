@@ -37,3 +37,6 @@ Build with debug mode:
 $ make DEBUG=1
 $ ./mine
 ```
+| key | description |
+|---|---|
+| <kbd>p</kbd> | Peek behind closed cells |
