@@ -23,7 +23,7 @@ usage: mine [-r num] [-c num] [-p num]
 
 | key                                                 | description        |
 |-----------------------------------------------------|--------------------|
-| <kbd>w</kbd>,<kbd>a</kbd>,<kbd>s</kbd>,<kbd>d</kbd> | Move cursor around |
+| <kbd>w/↑</kbd>,<kbd>a/←</kbd>,<kbd>s/↓</kbd>,<kbd>d/→</kbd> | Move cursor around |
 | <kbd>SPACE</kbd>                                    | Open cell          |
 | <kbd>f</kbd>                                        | Flag/unflag cell   |
 | <kbd>r</kbd>                                        | Restart            |
