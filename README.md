@@ -2,6 +2,9 @@
 
 ![thumbnail](./thumbnail.png)
 
+## To note
+Works with Linux and MacOS platforms. **The program was not tested on Windows**
+
 ## Quick Start
 
 ```console
