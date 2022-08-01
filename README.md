@@ -1,6 +1,6 @@
 # Terminal Minesweeper (Work in Progress)
 
-![thumbnail](./thumbnail.png)
+![thumbnail](./terminal.png)
 
 ## To note
 Works with Linux and MacOS platforms. **The program was not tested on Windows**
