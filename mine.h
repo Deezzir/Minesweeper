@@ -101,16 +101,19 @@ void field_generate(struct Field* field);
 
 /* Function to check if provided row and col is out of bounds */
 bool field_out_of_bounds(struct Field* field, int row, int col);
-
+ 
 /* Fucntion to open a cell at the position of the cursor. */
 /* Return false if a cell is not a bomb, true otherwise */
 bool field_cell_open(struct Field* field);
+ 
+/* Function to open cell at the provided col and row */
+bool field_cell_open_at(struct Field* field, int row, int col);
 
 /* Function to mark all bombs on the field with the provided state. Happens when a player loses or wins */
 void field_mark_all_bombs(struct Field* field, int state);
 
 /* Helper function to abstract win or defeat */
-void field_finale(struct Field* field, int exodus);
+void field_finale(struct Field* field, int exodus); 
 
 /* Function to handle player's defeat */
 void field_defeat(struct Field* field);

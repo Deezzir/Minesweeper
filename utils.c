@@ -180,7 +180,6 @@ bool yes() {
         switch (answer) {
             case 'n':
             case 'N':
-            case '\033':
                 printf("\r\033[2K");
                 return false;
                 break;
@@ -197,7 +196,8 @@ bool yes() {
                 break;
         }
 
-    } while (1);
+    } while (is_running);
+    return true;
 }
 
 void clear_screen() {

@@ -14,7 +14,7 @@ uint ROWS = 20;
 uint COLS = 20;
 uint PERCENTAGE = 20;
 
-uint FIELD_MIN_LIMIT = 1;
+uint FIELD_MIN_LIMIT = 10;
 uint FIELD_MAX_LIMIT = 128;
 uint PERCENTAGE_MIN_LIMIT = 1;
 uint PERCENTAGE_MAX_LIMIT = 60;
@@ -194,11 +194,23 @@ void field_generate(struct Field* field) {
     field->generated = true;
 }
 
-bool field_cell_open(struct Field* field) {
-    struct Cell* cell = field_get_cell_ref(field, field->cursor.row, field->cursor.col);
-    cell->state = opened;
+bool field_cell_open_at(struct Field* field, int row, int col) {
+    struct Cell* cell = field_get_cell_ref(field, row, col);
+    cell->state = opened; 
+
+    if (cell->neighbor_count == 0) 
+        for (int x = -1; x <= 1; x++)
+            for (int y = -1; y <= 1; y++)
+                if (!field_out_of_bounds(field, row + x, col + y))
+                    if (field_get_cell(field, row + x, col + y).state == closed)
+                        if (field_cell_open_at(field, row + x, col + y))
+                            return true;
 
     return cell->value == bomb;
+}
+
+bool field_cell_open(struct Field* field) {
+    return field_cell_open_at(field, field->cursor.row, field->cursor.col);
 }
 
 void field_mark_all_bombs(struct Field* field, int state) {
