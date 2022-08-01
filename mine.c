@@ -14,7 +14,7 @@ uint ROWS = 20;
 uint COLS = 20;
 uint PERCENTAGE = 20;
 
-uint FIELD_MIN_LIMIT = 20;
+uint FIELD_MIN_LIMIT = 1;
 uint FIELD_MAX_LIMIT = 128;
 uint PERCENTAGE_MIN_LIMIT = 1;
 uint PERCENTAGE_MAX_LIMIT = 60;
@@ -195,15 +195,61 @@ void field_generate(struct Field* field) {
 }
 
 bool field_cell_open(struct Field* field) {
-    return true;
+    struct Cell* cell = field_get_cell_ref(field, field->cursor.row, field->cursor.col);
+    cell->state = opened;
+
+    return cell->value == bomb;
 }
 
-void field_open_all_bombs(struct Field* field) {
+void field_mark_all_bombs(struct Field* field, int state) {
     for (uint row = 0; row < field->rows; row++)
         for (uint col = 0; col < field->cols; col++) {
             struct Cell* cell = field_get_cell_ref(field, row, col);
-            if (cell->value == bomb) cell->state = opened;
+            if (cell->value == bomb) cell->state = state;
         }   
+}
+
+void field_finale(struct Field* field, int exodus) {
+    field_mark_all_bombs(field, exodus == win ? flagged : opened);
+    field_redisplay(field);
+
+    exodus == win ? printf("You won, try again? Y/y N/n: ") 
+        : printf("You lost, try again? Y/y N/n: ");
+
+    if (yes()) {
+        field_init(field, ROWS, COLS, PERCENTAGE);
+        field_redisplay(field);
+    } else is_running = false; 
+}
+
+void field_defeat(struct Field* field) {
+    field_finale(field, defeat);
+}
+
+void field_win(struct Field* field) {
+    field_finale(field, win);
+}
+
+bool field_is_win(struct Field* field) {
+    for (uint row = 0; row < field->rows; row++)
+        for (uint col = 0; col < field->cols; col++) {
+            struct Cell cell = field_get_cell(field, row, col);
+            switch (cell.state) {
+            case closed:
+            case flagged:
+                if(cell.value != bomb) return false;
+                break;
+            
+            case opened:
+                if (cell.value != empty) return false;
+                break;
+
+            default:
+                break;
+            }
+        }
+
+    return true;
 }
 
 int main(int argc, char** argv) {
@@ -276,19 +322,10 @@ int main(int argc, char** argv) {
                 if (!main.generated)
                     field_generate(&main); 
 
-                if (field_cell_open(&main)) {
-                    field_open_all_bombs(&main);
-                    field_redisplay(&main);
-
-                    printf("You lost, try again? Y/y N/n: ");
-                    if (yes()) {
-                        field_init(&main, ROWS, COLS, PERCENTAGE);
-                        field_redisplay(&main);
-                    } else is_running = false; 
-                } else {
-                    ;
-                }
-                
+                if (field_cell_open(&main))
+                    field_defeat(&main);
+                else 
+                    if(field_is_win(&main)) field_win(&main);
                 break;
 
             case 'r':

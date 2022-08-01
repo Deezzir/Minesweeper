@@ -30,6 +30,12 @@ enum CellValue {
     bomb
 };
 
+/* Game exodus enum */
+enum exodus {
+    win,
+    defeat
+};
+
 /* Cell struct */
 struct Cell {
     enum CellState state;
@@ -100,7 +106,19 @@ bool field_out_of_bounds(struct Field* field, int row, int col);
 /* Return false if a cell is not a bomb, true otherwise */
 bool field_cell_open(struct Field* field);
 
-/* Function to open all bombs on the field. Happens when player loses */
-void field_open_all_bombs(struct Field* field);
+/* Function to mark all bombs on the field with the provided state. Happens when a player loses or wins */
+void field_mark_all_bombs(struct Field* field, int state);
+
+/* Helper function to abstract win or defeat */
+void field_finale(struct Field* field, int exodus);
+
+/* Function to handle player's defeat */
+void field_defeat(struct Field* field);
+
+/* Function to check if a player won */
+bool field_is_win(struct Field* field);
+
+/* Function to handle player's win */
+void field_win(struct Field* field);
 
 #endif // __MINE_H
