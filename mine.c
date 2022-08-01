@@ -171,6 +171,7 @@ void field_flag_cell(struct Field* field) {
 }
 
 void field_generate(struct Field* field) {
+    // TODO: Improve field generaion
     uint bombs_count = (field->rows * field->cols * field->percentage) / 100;
 
     while (bombs_count > 0) {
