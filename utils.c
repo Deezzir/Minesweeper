@@ -19,8 +19,8 @@ struct termios saved_tattr;
 
 void usage() {
     printf("usage: mine [-r num] [-c num] [-p num]\n");
-    printf("       Optionally specify field [-r] rows and [-c] cols (%zu-%zu)\n", FIELD_MIN_LIMIT, FIELD_MAX_LIMIT);
-    printf("       Optionally specify [-p] percentage of mines (%zu-%zu) \n", PERCENTAGE_MIN_LIMIT, PERCENTAGE_MAX_LIMIT);
+    printf("       Optionally specify field [-r] rows and [-c] cols (%u-%u)\n", FIELD_MIN_LIMIT, FIELD_MAX_LIMIT);
+    printf("       Optionally specify [-p] percentage of mines (%u-%u) \n", PERCENTAGE_MIN_LIMIT, PERCENTAGE_MAX_LIMIT);
 }
 
 int options(int argc, char *argv[], const char *legal) {

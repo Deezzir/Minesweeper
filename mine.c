@@ -1,29 +1,34 @@
+#include <signal.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include <string.h>
 #include <unistd.h>
-#include <signal.h>
+#include <time.h>
 
 #include "mine.h"
 #include "utils.h"
 
 /* Defaults */
-size_t ROWS = 20;
-size_t COLS = 20;
-size_t PERCENTAGE = 20;
+uint ROWS = 20;
+uint COLS = 20;
+uint PERCENTAGE = 20;
 
-size_t FIELD_MIN_LIMIT = 20;
-size_t FIELD_MAX_LIMIT = 128;
-size_t PERCENTAGE_MIN_LIMIT = 1;
-size_t PERCENTAGE_MAX_LIMIT = 60;
+uint FIELD_MIN_LIMIT = 20;
+uint FIELD_MAX_LIMIT = 128;
+uint PERCENTAGE_MIN_LIMIT = 1;
+uint PERCENTAGE_MAX_LIMIT = 60;
 
 bool is_running;
 
-void field_init(struct Field* field, size_t rows, size_t cols, size_t perc) {
+void field_init(struct Field* field, uint rows, uint cols, uint perc) {
     field->cols = cols;
     field->rows = rows;
     field->percentage = perc;
+    field->generated = false;
+#if DEBUG
+    field->peeked = false;
+#endif
 
     field->cursor.col = 0;
     field->cursor.row = 0;
@@ -34,52 +39,81 @@ void field_init(struct Field* field, size_t rows, size_t cols, size_t perc) {
         exit(EXIT_FAILURE);
     }
 
-    for (size_t row = 0; row < rows; row++) {
-        for (size_t col = 0; col < cols; col++) {
-            field->cells[row * cols + col].value = empty;
-            field->cells[row * cols + col].state = closed;
+    for (uint row = 0; row < rows; row++) {
+        for (uint col = 0; col < cols; col++) {
+            uint index = row * cols + col;
+            field->cells[index].state = closed;
+            field->cells[index].value = empty;
+            field->cells[index].neighbor_count = 0;
         }
     }
 }
 
 void field_redisplay(struct Field* field) {
-    printf("\033[%dA", (int)field->rows); 
-    printf("\033[%dD", (int)field->cols*3); 
+#if DEBUG
+    printf("\033[1A");
+    printf("\033[24D");
+#endif
+    printf("\033[%dA", (int)field->rows);
+    printf("\033[%dD", (int)field->cols * 3);
     field_display(field);
-     
 }
 
 void field_display(struct Field* field) {
-    for (size_t row = 0; row < field->rows; row++) {
-        for (size_t col = 0; col < field->cols; col++) {
+#if DEBUG
+    printf("CURSOR-> ROW: %02u COL: %02u\n", field->cursor.row, field->cursor.col);
+#endif
+    for (uint row = 0; row < field->rows; row++) {
+        for (uint col = 0; col < field->cols; col++) {
             bool at_cursor = field_at_cursor(field, row, col);
+            struct Cell cell = field_get_cell(field, row, col);
             printf("%c", at_cursor ? '[' : ' ');
-            switch (field->cells[row * field->cols + col].state) {
-                case closed:
-                    printf("*");
-                    break;
+#if DEBUG
+            if (field->peeked)
+                switch (cell.value) {
+                    case empty:
+                        cell.neighbor_count > 0 ? printf("%u", cell.neighbor_count) : printf(" ");
+                        break;
 
-                case opened:
-                    break;
+                    case bomb:
+                        printf("@");
+                        break;
 
-                case flagged:
-                    printf("?");
-                    break;
+                    default:
+                        break;
+                }
+            else
+#endif
+                switch (cell.state) {
+                    case closed:
+                        printf("*");
+                        break;
 
-                default:
-                    break;
-            }
+                    case opened:
+                        break;
+
+                    case flagged:
+                        printf("?");
+                        break;
+
+                    default:
+                        break;
+                }
             printf("%c", at_cursor ? ']' : ' ');
         }
         printf("\n");
     }
 }
 
-struct Cell* field_get_cell(struct Field* field, size_t row, size_t col) {
+struct Cell* field_get_cell_ref(struct Field* field, uint row, uint col) {
     return &(field->cells[row * field->cols + col]);
 }
 
-bool field_at_cursor(struct Field* field, size_t row, size_t col) {
+struct Cell field_get_cell(struct Field* field, uint row, uint col) {
+    return field->cells[row * field->cols + col];
+}
+
+bool field_at_cursor(struct Field* field, uint row, uint col) {
     return field->cursor.row == row && field->cursor.col == col;
 }
 
@@ -88,7 +122,7 @@ void field_free(struct Field* field) {
 }
 
 void field_cursor_move_right(struct Field* field) {
-    if (field->cursor.col < COLS - 1) field->cursor.col += 1; 
+    if (field->cursor.col < field->cols - 1) field->cursor.col += 1;
 }
 
 void field_cursor_move_up(struct Field* field) {
@@ -96,27 +130,55 @@ void field_cursor_move_up(struct Field* field) {
 }
 
 void field_cursor_move_down(struct Field* field) {
-    if (field->cursor.row < ROWS - 1) field->cursor.row += 1;
+    if (field->cursor.row < field->rows - 1) field->cursor.row += 1;
 }
 
 void field_cursor_move_left(struct Field* field) {
     if (field->cursor.col > 0) field->cursor.col -= 1;
 }
 
-void field_flag_cell(struct Field* field) {
-    struct Cell* cell = field_get_cell(field, field->cursor.row, field->cursor.col);
-    switch (cell->state) {
-    case closed:
-        cell->state = flagged;
-        break;
+bool field_out_of_bounds(struct Field* field, int row, int col) {
+    return row < 0 || row >= field->rows || col < 0 || col >= field->cols;
+}
 
-    case flagged:
-        cell->state = closed;
-        break;
-    
-    default:
-        break;
+void field_flag_cell(struct Field* field) {
+    struct Cell* cell = field_get_cell_ref(field, field->cursor.row, field->cursor.col);
+    switch (cell->state) {
+        case closed:
+            cell->state = flagged;
+            break;
+
+        case flagged:
+            cell->state = closed;
+            break;
+
+        default:
+            break;
     }
+}
+
+void field_generate(struct Field* field) {
+    uint bombs_count = (field->rows * field->cols * field->percentage) / 100;
+
+    while (bombs_count > 0) {
+        uint col = rand() % field->cols;
+        uint row = rand() % field->rows;
+
+        if (field->cursor.row != row || field->cursor.col != col) {
+            struct Cell* cell = field_get_cell_ref(field, row, col);
+            if (cell->value != bomb) {
+                for (int x = -1; x <= 1; x++)
+                    for (int y = -1; y <= 1; y++)
+                        if ((x != 0 || y != 0) && !field_out_of_bounds(field, row + x, col + y)) 
+                            field_get_cell_ref(field, row + x, col + y)->neighbor_count++;
+
+                cell->value = bomb;
+                bombs_count--;
+            }
+        }
+    }
+
+    field->generated = true;
 }
 
 int main(int argc, char** argv) {
@@ -133,55 +195,69 @@ int main(int argc, char** argv) {
     sigemptyset(&action.sa_mask);
     action.sa_flags = 0;
     if (sigaction(SIGINT, &action, NULL) < 0) {
-        printf("ERROR:  failed to set signal action");
+        printf("ERROR: failed to set signal action");
         exit(EXIT_FAILURE);
     }
 
+    // Use current time as seed for random generator
+    srand(time(0));
+
 #ifdef DEBUG
-    printf("ROWS: %zu\n", ROWS);
-    printf("COLS: %zu\n", COLS);
-    printf("PERCENTAGE: %zu\n", PERCENTAGE);
+    printf("ROWS: %u ", ROWS);
+    printf("COLS: %u ", COLS);
+    printf("PERCENTAGE: %u\n", PERCENTAGE);
 #endif
-  
+
     field_init(&main, ROWS, COLS, PERCENTAGE);
     field_display(&main);
 
-    while (is_running){
+    while (is_running) {
         field_redisplay(&main);
         input = getchar();
 
         switch (input) {
-        case 'q':
-            printf("Exit the game? Y/y N/n: ");
-            is_running = !yes();
-            break;
-        
-        case 'w':
-        case '\101':
-            field_cursor_move_up(&main);
-            break;
+            case 'q':
+                printf("Exit the game? Y/y N/n: ");
+                is_running = !yes();
+                break;
 
-        case 'a':
-        case '\104':
-            field_cursor_move_left(&main);
-            break;
+            case 'w':
+            case '\101':  // arrow up
+                field_cursor_move_up(&main);
+                break;
 
-        case 's':
-        case '\102':
-            field_cursor_move_down(&main);
-            break;
+            case 'a':
+            case '\104':  // arrow left
+                field_cursor_move_left(&main);
+                break;
 
-        case 'd':
-        case '\103':
-            field_cursor_move_right(&main);
-            break;
+            case 's':
+            case '\102':  // arrow down
+                field_cursor_move_down(&main);
+                break;
 
-        case 'f':
-            field_flag_cell(&main);
-            break;
+            case 'd':
+            case '\103':  // arrow right
+                field_cursor_move_right(&main);
+                break;
 
-        default:
-            break;
+            case 'f':
+                field_flag_cell(&main);
+                break;
+
+            case ' ': // space
+                if (!main.generated) {
+                    field_generate(&main); 
+                }
+                break;
+
+#if DEBUG
+            case 'p':
+                main.peeked = !main.peeked;
+                break;
+#endif
+            default:
+                break;
         }
     }
 
