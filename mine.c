@@ -90,6 +90,18 @@ void field_display(struct Field* field) {
                         break;
 
                     case opened:
+                        switch (cell.value) {
+                        case empty:
+                            cell.neighbor_count > 0 ? printf("%u", cell.neighbor_count) : printf(" ");
+                            break;
+                        
+                        case bomb:
+                            printf("@");
+                            break;
+                        
+                        default:
+                            break;
+                        }
                         break;
 
                     case flagged:
@@ -181,6 +193,18 @@ void field_generate(struct Field* field) {
     field->generated = true;
 }
 
+bool field_cell_open(struct Field* field) {
+    return true;
+}
+
+void field_open_all_bombs(struct Field* field) {
+    for (uint row = 0; row < field->rows; row++)
+        for (uint col = 0; col < field->cols; col++) {
+            struct Cell* cell = field_get_cell_ref(field, row, col);
+            if (cell->value == bomb) cell->state = opened;
+        }   
+}
+
 int main(int argc, char** argv) {
     struct Field main;
     is_running = true;
@@ -246,11 +270,29 @@ int main(int argc, char** argv) {
                 break;
 
             case ' ': // space
-                if (!main.generated) {
+                if (!main.generated)
                     field_generate(&main); 
+
+                if (field_cell_open(&main)) {
+                    field_open_all_bombs(&main);
+                    field_redisplay(&main);
+
+                    printf("You lost, try again? Y/y N/n: ");
+                    if (yes()) {
+                        field_init(&main, ROWS, COLS, PERCENTAGE);
+                        field_redisplay(&main);
+                    } else is_running = false; 
+                } else {
+                    ;
                 }
+                
                 break;
 
+            case 'r':
+                printf("Restart the game? Y/y N/n: ");
+                if (yes())
+                    field_init(&main, ROWS, COLS, PERCENTAGE);
+                break;
 #if DEBUG
             case 'p':
                 main.peeked = !main.peeked;

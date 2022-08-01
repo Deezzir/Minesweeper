@@ -96,4 +96,11 @@ void field_generate(struct Field* field);
 /* Function to check if provided row and col is out of bounds */
 bool field_out_of_bounds(struct Field* field, int row, int col);
 
+/* Fucntion to open a cell at the position of the cursor. */
+/* Return false if a cell is not a bomb, true otherwise */
+bool field_cell_open(struct Field* field);
+
+/* Function to open all bombs on the field. Happens when player loses */
+void field_open_all_bombs(struct Field* field);
+
 #endif // __MINE_H
