@@ -33,6 +33,7 @@ void field_init(struct Field* field, uint rows, uint cols, uint perc) {
     field->cursor.col = 0;
     field->cursor.row = 0;
 
+    if (field->cells != NULL) field_free(field);
     field->cells = (struct Cell*)calloc(rows * cols, sizeof(struct Cell));
     if (field->cells == NULL) {
         printf("ERROR: memory was not allocated\n");
@@ -206,7 +207,9 @@ void field_open_all_bombs(struct Field* field) {
 }
 
 int main(int argc, char** argv) {
-    struct Field main;
+    struct Field main = {
+        .cells = NULL
+    };
     is_running = true;
     int input;
 
