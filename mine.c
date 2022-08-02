@@ -16,9 +16,9 @@ uint COLS = 20;
 uint PERCENTAGE = 20;
 
 uint FIELD_MIN_LIMIT = 10;
-uint FIELD_MAX_LIMIT = 40;
-uint PERCENTAGE_MIN_LIMIT = 1;
-uint PERCENTAGE_MAX_LIMIT = 60;
+uint FIELD_MAX_LIMIT = 50;
+uint PERCENTAGE_MIN_LIMIT = 10;
+uint PERCENTAGE_MAX_LIMIT = 30;
 
 bool is_running;
 
