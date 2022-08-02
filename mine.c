@@ -1,12 +1,13 @@
+#include "mine.h"
+
 #include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <time.h>
+#include <unistd.h>
 
-#include "mine.h"
 #include "utils.h"
 
 /* Defaults */
@@ -15,7 +16,7 @@ uint COLS = 20;
 uint PERCENTAGE = 20;
 
 uint FIELD_MIN_LIMIT = 10;
-uint FIELD_MAX_LIMIT = 128;
+uint FIELD_MAX_LIMIT = 40;
 uint PERCENTAGE_MIN_LIMIT = 1;
 uint PERCENTAGE_MAX_LIMIT = 60;
 
@@ -92,16 +93,16 @@ void field_display(struct Field* field) {
 
                     case opened:
                         switch (cell.value) {
-                        case empty:
-                            cell.neighbor_count > 0 ? printf("%u", cell.neighbor_count) : printf(" ");
-                            break;
-                        
-                        case bomb:
-                            printf("@");
-                            break;
-                        
-                        default:
-                            break;
+                            case empty:
+                                cell.neighbor_count > 0 ? printf("%u", cell.neighbor_count) : printf(" ");
+                                break;
+
+                            case bomb:
+                                printf("@");
+                                break;
+
+                            default:
+                                break;
                         }
                         break;
 
@@ -170,20 +171,29 @@ void field_flag_cell(struct Field* field) {
     }
 }
 
+bool field_around_cursor(struct Field* field, int row, int col) {
+    for (int x = -1; x <= 1; x++)
+        for (int y = -1; y <= 1; y++)
+            if ((field->cursor.row + x) == row && (field->cursor.col + y) == col)
+                return true;
+
+    return false;
+}
+
 void field_generate(struct Field* field) {
     // TODO: Improve field generaion
     uint bombs_count = (field->rows * field->cols * field->percentage) / 100;
 
     while (bombs_count > 0) {
-        uint col = rand() % field->cols;
         uint row = rand() % field->rows;
+        uint col = rand() % field->cols;
 
-        if (field->cursor.row != row || field->cursor.col != col) {
+        if (!field_around_cursor(field, row, col)) {
             struct Cell* cell = field_get_cell_ref(field, row, col);
             if (cell->value != bomb) {
                 for (int x = -1; x <= 1; x++)
                     for (int y = -1; y <= 1; y++)
-                        if ((x != 0 || y != 0) && !field_out_of_bounds(field, row + x, col + y)) 
+                        if ((x != 0 || y != 0) && !field_out_of_bounds(field, row + x, col + y))
                             field_get_cell_ref(field, row + x, col + y)->neighbor_count++;
 
                 cell->value = bomb;
@@ -197,9 +207,9 @@ void field_generate(struct Field* field) {
 
 bool field_cell_open_at(struct Field* field, int row, int col) {
     struct Cell* cell = field_get_cell_ref(field, row, col);
-    cell->state = opened; 
+    cell->state = opened;
 
-    if (cell->neighbor_count == 0) 
+    if (cell->neighbor_count == 0)
         for (int x = -1; x <= 1; x++)
             for (int y = -1; y <= 1; y++)
                 if (!field_out_of_bounds(field, row + x, col + y))
@@ -219,20 +229,21 @@ void field_mark_all_bombs(struct Field* field, int state) {
         for (uint col = 0; col < field->cols; col++) {
             struct Cell* cell = field_get_cell_ref(field, row, col);
             if (cell->value == bomb) cell->state = state;
-        }   
+        }
 }
 
 void field_finale(struct Field* field, int exodus) {
     field_mark_all_bombs(field, exodus == win ? flagged : opened);
     field_redisplay(field);
 
-    exodus == win ? printf("You won, try again? Y/y N/n: ") 
-        : printf("You lost, try again? Y/y N/n: ");
+    exodus == win ? printf("You won, try again? Y/y N/n: ")
+                  : printf("You lost, try again? Y/y N/n: ");
 
     if (yes()) {
         field_init(field, ROWS, COLS, PERCENTAGE);
         field_redisplay(field);
-    } else is_running = false; 
+    } else
+        is_running = false;
 }
 
 void field_defeat(struct Field* field) {
@@ -248,17 +259,17 @@ bool field_is_win(struct Field* field) {
         for (uint col = 0; col < field->cols; col++) {
             struct Cell cell = field_get_cell(field, row, col);
             switch (cell.state) {
-            case closed:
-            case flagged:
-                if(cell.value != bomb) return false;
-                break;
-            
-            case opened:
-                if (cell.value != empty) return false;
-                break;
+                case closed:
+                case flagged:
+                    if (cell.value != bomb) return false;
+                    break;
 
-            default:
-                break;
+                case opened:
+                    if (cell.value != empty) return false;
+                    break;
+
+                default:
+                    break;
             }
         }
 
@@ -267,8 +278,7 @@ bool field_is_win(struct Field* field) {
 
 int main(int argc, char** argv) {
     struct Field main = {
-        .cells = NULL
-    };
+        .cells = NULL};
     is_running = true;
     int input;
 
@@ -331,14 +341,14 @@ int main(int argc, char** argv) {
                 field_flag_cell(&main);
                 break;
 
-            case ' ': // space
+            case ' ':  // space
                 if (!main.generated)
-                    field_generate(&main); 
+                    field_generate(&main);
 
                 if (field_cell_open(&main))
                     field_defeat(&main);
-                else 
-                    if(field_is_win(&main)) field_win(&main);
+                else if (field_is_win(&main))
+                    field_win(&main);
                 break;
 
             case 'r':

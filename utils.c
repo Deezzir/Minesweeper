@@ -1,6 +1,8 @@
+#include "utils.h"
+
 #include <ctype.h>
-#include <signal.h>
 #include <errno.h>
+#include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,7 +10,6 @@
 #include <termios.h>
 #include <unistd.h>
 
-#include "utils.h"
 #include "mine.h"
 
 int opt_index = 1;

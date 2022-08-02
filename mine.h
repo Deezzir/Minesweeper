@@ -6,16 +6,16 @@
 typedef unsigned int uint;
 
 /* Defaults */
-extern uint ROWS;           /* Number of rows */
-extern uint COLS;           /* Number of cols */
-extern uint PERCENTAGE;     /* Percentage of bombs */
- 
-extern uint FIELD_MIN_LIMIT;       /* Min Number of rows and cols */
-extern uint FIELD_MAX_LIMIT;       /* Max Number of rows and cols */
-extern uint PERCENTAGE_MIN_LIMIT;  /* Min percentage of mines */
-extern uint PERCENTAGE_MAX_LIMIT;  /* Max percentage of mines */
+extern uint ROWS;       /* Number of rows */
+extern uint COLS;       /* Number of cols */
+extern uint PERCENTAGE; /* Percentage of bombs */
 
-extern bool is_running;              /* program status */
+extern uint FIELD_MIN_LIMIT;      /* Min Number of rows and cols */
+extern uint FIELD_MAX_LIMIT;      /* Max Number of rows and cols */
+extern uint PERCENTAGE_MIN_LIMIT; /* Min percentage of mines */
+extern uint PERCENTAGE_MAX_LIMIT; /* Max percentage of mines */
+
+extern bool is_running; /* program status */
 
 /* Cell State enum */
 enum CellState {
@@ -31,7 +31,7 @@ enum CellValue {
 };
 
 /* Game exodus enum */
-enum exodus {
+enum Exodus {
     win,
     defeat
 };
@@ -54,11 +54,11 @@ struct Field {
     struct Cell* cells;
     struct Cursor cursor;
     bool generated;
+
 #if DEBUG
     bool peeked;
 #endif
 };
-
 
 /* Function to initialize Field struct instance */
 void field_init(struct Field* field, uint rows, uint cols, uint perc);
@@ -101,11 +101,14 @@ void field_generate(struct Field* field);
 
 /* Function to check if provided row and col is out of bounds */
 bool field_out_of_bounds(struct Field* field, int row, int col);
- 
+
+/* Function to check if the provided row and col is around cursor */
+bool field_around_cursor(struct Field* field, int row, int col);
+
 /* Fucntion to open a cell at the position of the cursor. */
 /* Return false if a cell is not a bomb, true otherwise */
 bool field_cell_open(struct Field* field);
- 
+
 /* Function to open cell at the provided col and row */
 bool field_cell_open_at(struct Field* field, int row, int col);
 
@@ -113,7 +116,7 @@ bool field_cell_open_at(struct Field* field, int row, int col);
 void field_mark_all_bombs(struct Field* field, int state);
 
 /* Helper function to abstract win or defeat */
-void field_finale(struct Field* field, int exodus); 
+void field_finale(struct Field* field, int exodus);
 
 /* Function to handle player's defeat */
 void field_defeat(struct Field* field);
@@ -124,4 +127,4 @@ bool field_is_win(struct Field* field);
 /* Function to handle player's win */
 void field_win(struct Field* field);
 
-#endif // __MINE_H
+#endif  // __MINE_H
